@@ -175,7 +175,13 @@ fn main() {
 
     #[cfg(any(unix, target_env = "gnu"))]
     {
-        if std::env::var("LIBOPUS_NO_PKG").is_ok() || std::env::var("OPUS_NO_PKG").is_ok() {
+        let is_qext = cfg!(feature = "qext") || std::env::var("OPUS_ENABLE_QEXT").is_ok();
+        let is_dred = cfg!(feature = "dred") || std::env::var("OPUS_ENABLE_DRED").is_ok();
+        let is_osce = cfg!(feature = "osce") || std::env::var("OPUS_ENABLE_OSCE").is_ok();
+
+        if is_qext || is_dred || is_osce {
+            println!("cargo:info=Force building Opus due to experimental features.");
+        } else if std::env::var("LIBOPUS_NO_PKG").is_ok() || std::env::var("OPUS_NO_PKG").is_ok() {
             println!("cargo:info=Bypassed `pkg-config`.");
         } else if find_via_pkg_config(is_static) {
             println!("cargo:info=Found `Opus` via `pkg_config`.");
