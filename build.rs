@@ -7,7 +7,11 @@ use std::{env, fmt::Display, path::Path};
 /// Outputs the library-file's prefix as word usable for actual arguments on
 /// commands or paths.
 const fn rustc_linking_word(is_static_link: bool) -> &'static str {
-    if is_static_link { "static" } else { "dylib" }
+    if is_static_link {
+        "static"
+    } else {
+        "dylib"
+    }
 }
 
 /// Generates a new binding at `src/lib.rs` using `src/wrapper.h`.
@@ -175,29 +179,5 @@ fn main() {
     generate_binding();
 
     let is_static = is_static_build();
-
-    #[cfg(any(unix, target_env = "gnu"))]
-    {
-        let is_qext = env::var("CARGO_FEATURE_QEXT").is_ok();
-        let is_dred = env::var("CARGO_FEATURE_DRED").is_ok();
-        let is_osce = env::var("CARGO_FEATURE_OSCE").is_ok();
-
-        if is_qext || is_dred || is_osce {
-            println!("cargo:info=Force building Opus due to experimental features.");
-        } else if std::env::var("LIBOPUS_NO_PKG").is_ok() || std::env::var("OPUS_NO_PKG").is_ok() {
-            println!("cargo:info=Bypassed `pkg-config`.");
-        } else if find_via_pkg_config(is_static) {
-            println!("cargo:info=Found `Opus` via `pkg_config`.");
-
-            return;
-        } else {
-            println!("cargo:info=`pkg_config` could not find `Opus`.");
-        }
-    }
-
-    if let Some(installed_opus) = find_installed_opus() {
-        link_opus(is_static, installed_opus);
-    } else {
-        build_opus(is_static);
-    }
+    build_opus(is_static);
 }
