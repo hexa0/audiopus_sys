@@ -70,6 +70,19 @@ fn build_opus(is_static: bool) {
         dst.define("CMAKE_SYSTEM_PROCESSOR", map_architecture(&abi));
     }
 
+    if std::env::var("OPUS_ENABLE_QEXT").is_ok() {
+        println!("cargo:info=Enabling QEXT.");
+        dst.define("ENABLE_QEXT", "1");
+    }
+    if std::env::var("OPUS_ENABLE_DRED").is_ok() {
+        println!("cargo:info=Enabling DRED.");
+        dst.define("OPUS_DRED", "ON");
+    }
+    if std::env::var("OPUS_ENABLE_OSCE").is_ok() {
+        println!("cargo:info=Enabling OSCE.");
+        dst.define("OPUS_OSCE", "ON");
+    }
+
     println!("cargo:info=Building Opus via CMake.");
     let opus_build_dir = dst.build();
     link_opus(is_static, opus_build_dir.display())

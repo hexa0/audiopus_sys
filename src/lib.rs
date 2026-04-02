@@ -8,7 +8,8 @@
 pub const _STDINT_H: u32 = 1;
 pub const _FEATURES_H: u32 = 1;
 pub const _DEFAULT_SOURCE: u32 = 1;
-pub const __GLIBC_USE_ISOC2X: u32 = 0;
+pub const __GLIBC_USE_ISOC2Y: u32 = 0;
+pub const __GLIBC_USE_ISOC23: u32 = 0;
 pub const __USE_ISOC11: u32 = 1;
 pub const __USE_ISOC99: u32 = 1;
 pub const __USE_ISOC95: u32 = 1;
@@ -26,12 +27,13 @@ pub const __WORDSIZE: u32 = 64;
 pub const __WORDSIZE_TIME64_COMPAT32: u32 = 1;
 pub const __SYSCALL_WORDSIZE: u32 = 64;
 pub const __TIMESIZE: u32 = 64;
+pub const __USE_TIME_BITS64: u32 = 1;
 pub const __USE_MISC: u32 = 1;
 pub const __USE_ATFILE: u32 = 1;
 pub const __USE_FORTIFY_LEVEL: u32 = 0;
 pub const __GLIBC_USE_DEPRECATED_GETS: u32 = 0;
 pub const __GLIBC_USE_DEPRECATED_SCANF: u32 = 0;
-pub const __GLIBC_USE_C2X_STRTOL: u32 = 0;
+pub const __GLIBC_USE_C23_STRTOL: u32 = 0;
 pub const _STDC_PREDEF_H: u32 = 1;
 pub const __STDC_IEC_559__: u32 = 1;
 pub const __STDC_IEC_60559_BFP__: u32 = 201404;
@@ -40,17 +42,17 @@ pub const __STDC_IEC_60559_COMPLEX__: u32 = 201404;
 pub const __STDC_ISO_10646__: u32 = 201706;
 pub const __GNU_LIBRARY__: u32 = 6;
 pub const __GLIBC__: u32 = 2;
-pub const __GLIBC_MINOR__: u32 = 39;
+pub const __GLIBC_MINOR__: u32 = 42;
 pub const _SYS_CDEFS_H: u32 = 1;
 pub const __glibc_c99_flexarr_available: u32 = 1;
 pub const __LDOUBLE_REDIRECTS_TO_FLOAT128_ABI: u32 = 0;
 pub const __HAVE_GENERIC_SELECTION: u32 = 1;
 pub const __GLIBC_USE_LIB_EXT2: u32 = 0;
 pub const __GLIBC_USE_IEC_60559_BFP_EXT: u32 = 0;
-pub const __GLIBC_USE_IEC_60559_BFP_EXT_C2X: u32 = 0;
+pub const __GLIBC_USE_IEC_60559_BFP_EXT_C23: u32 = 0;
 pub const __GLIBC_USE_IEC_60559_EXT: u32 = 0;
 pub const __GLIBC_USE_IEC_60559_FUNCS_EXT: u32 = 0;
-pub const __GLIBC_USE_IEC_60559_FUNCS_EXT_C2X: u32 = 0;
+pub const __GLIBC_USE_IEC_60559_FUNCS_EXT_C23: u32 = 0;
 pub const __GLIBC_USE_IEC_60559_TYPES_EXT: u32 = 0;
 pub const _BITS_TYPES_H: u32 = 1;
 pub const _BITS_TYPESIZES_H: u32 = 1;
@@ -153,11 +155,19 @@ pub const OPUS_GET_IN_DTX_REQUEST: u32 = 4049;
 pub const OPUS_SET_DRED_DURATION_REQUEST: u32 = 4050;
 pub const OPUS_GET_DRED_DURATION_REQUEST: u32 = 4051;
 pub const OPUS_SET_DNN_BLOB_REQUEST: u32 = 4052;
+pub const OPUS_SET_OSCE_BWE_REQUEST: u32 = 4054;
+pub const OPUS_GET_OSCE_BWE_REQUEST: u32 = 4055;
+pub const OPUS_SET_QEXT_REQUEST: u32 = 4056;
+pub const OPUS_GET_QEXT_REQUEST: u32 = 4057;
+pub const OPUS_SET_IGNORE_EXTENSIONS_REQUEST: u32 = 4058;
+pub const OPUS_GET_IGNORE_EXTENSIONS_REQUEST: u32 = 4059;
 pub const OPUS_AUTO: i32 = -1000;
 pub const OPUS_BITRATE_MAX: i32 = -1;
 pub const OPUS_APPLICATION_VOIP: u32 = 2048;
 pub const OPUS_APPLICATION_AUDIO: u32 = 2049;
 pub const OPUS_APPLICATION_RESTRICTED_LOWDELAY: u32 = 2051;
+pub const OPUS_APPLICATION_RESTRICTED_SILK: u32 = 2052;
+pub const OPUS_APPLICATION_RESTRICTED_CELT: u32 = 2053;
 pub const OPUS_SIGNAL_VOICE: u32 = 3001;
 pub const OPUS_SIGNAL_MUSIC: u32 = 3002;
 pub const OPUS_BANDWIDTH_NARROWBAND: u32 = 1101;
@@ -291,7 +301,7 @@ pub struct OpusEncoder {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    #[doc = " Gets the size of an <code>OpusEncoder</code> structure.\n @param[in] channels <tt>int</tt>: Number of channels.\n                                   This must be 1 or 2.\n @returns The size in bytes."]
+    #[doc = " Gets the size of an <code>OpusEncoder</code> structure.\n @param[in] channels <tt>int</tt>: Number of channels.\n                                   This must be 1 or 2.\n @returns The size in bytes.\n @note Since this function does not take the application as input, it will overestimate\n the size required for OPUS_APPLICATION_RESTRICTED_SILK and OPUS_APPLICATION_RESTRICTED_CELT.\n That is generally not a problem, except when trying to know the size to use for a copy."]
     pub fn opus_encoder_get_size(channels: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {
@@ -317,6 +327,16 @@ unsafe extern "C" {
     pub fn opus_encode(
         st: *mut OpusEncoder,
         pcm: *const opus_int16,
+        frame_size: ::std::os::raw::c_int,
+        data: *mut ::std::os::raw::c_uchar,
+        max_data_bytes: opus_int32,
+    ) -> opus_int32;
+}
+unsafe extern "C" {
+    #[doc = " Encodes an Opus frame.\n @param [in] st <tt>OpusEncoder*</tt>: Encoder state\n @param [in] pcm <tt>opus_int32*</tt>: Input signal (interleaved if 2 channels) representing (or slightly exceeding) 24-bit values. length is frame_size*channels*sizeof(opus_int32)\n @param [in] frame_size <tt>int</tt>: Number of samples per channel in the\n                                      input signal.\n                                      This must be an Opus frame size for\n                                      the encoder's sampling rate.\n                                      For example, at 48 kHz the permitted\n                                      values are 120, 240, 480, 960, 1920,\n                                      and 2880.\n                                      Passing in a duration of less than\n                                      10 ms (480 samples at 48 kHz) will\n                                      prevent the encoder from using the LPC\n                                      or hybrid modes.\n @param [out] data <tt>unsigned char*</tt>: Output payload.\n                                            This must contain storage for at\n                                            least \\a max_data_bytes.\n @param [in] max_data_bytes <tt>opus_int32</tt>: Size of the allocated\n                                                 memory for the output\n                                                 payload. This may be\n                                                 used to impose an upper limit on\n                                                 the instant bitrate, but should\n                                                 not be used as the only bitrate\n                                                 control. Use #OPUS_SET_BITRATE to\n                                                 control the bitrate.\n @returns The length of the encoded packet (in bytes) on success or a\n          negative error code (see @ref opus_errorcodes) on failure."]
+    pub fn opus_encode24(
+        st: *mut OpusEncoder,
+        pcm: *const opus_int32,
         frame_size: ::std::os::raw::c_int,
         data: *mut ::std::os::raw::c_uchar,
         max_data_bytes: opus_int32,
@@ -380,7 +400,7 @@ unsafe extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {
-    #[doc = " Decode an Opus packet.\n @param [in] st <tt>OpusDecoder*</tt>: Decoder state\n @param [in] data <tt>char*</tt>: Input payload. Use a NULL pointer to indicate packet loss\n @param [in] len <tt>opus_int32</tt>: Number of bytes in payload*\n @param [out] pcm <tt>opus_int16*</tt>: Output signal (interleaved if 2 channels). length\n  is frame_size*channels*sizeof(opus_int16)\n @param [in] frame_size Number of samples per channel of available space in \\a pcm.\n  If this is less than the maximum packet duration (120ms; 5760 for 48kHz), this function will\n  not be capable of decoding some packets. In the case of PLC (data==NULL) or FEC (decode_fec=1),\n  then frame_size needs to be exactly the duration of audio that is missing, otherwise the\n  decoder will not be in the optimal state to decode the next incoming packet. For the PLC and\n  FEC cases, frame_size <b>must</b> be a multiple of 2.5 ms.\n @param [in] decode_fec <tt>int</tt>: Flag (0 or 1) to request that any in-band forward error correction data be\n  decoded. If no such data is available, the frame is decoded as if it were lost.\n @returns Number of decoded samples or @ref opus_errorcodes"]
+    #[doc = " Decode an Opus packet.\n @param [in] st <tt>OpusDecoder*</tt>: Decoder state\n @param [in] data <tt>char*</tt>: Input payload. Use a NULL pointer to indicate packet loss\n @param [in] len <tt>opus_int32</tt>: Number of bytes in payload*\n @param [out] pcm <tt>opus_int16*</tt>: Output signal (interleaved if 2 channels). length\n  is frame_size*channels*sizeof(opus_int16)\n @param [in] frame_size Number of samples per channel of available space in \\a pcm.\n  If this is less than the maximum packet duration (120ms; 5760 for 48kHz), this function will\n  not be capable of decoding some packets. In the case of PLC (data==NULL) or FEC (decode_fec=1),\n  then frame_size needs to be exactly the duration of audio that is missing, otherwise the\n  decoder will not be in the optimal state to decode the next incoming packet. For the PLC and\n  FEC cases, frame_size <b>must</b> be a multiple of 2.5 ms.\n @param [in] decode_fec <tt>int</tt>: Flag (0 or 1) to request that any in-band forward error correction data be\n  decoded. If no such data is available, the frame is decoded as if it were lost.\n @returns Number of decoded samples per channel or @ref opus_errorcodes"]
     pub fn opus_decode(
         st: *mut OpusDecoder,
         data: *const ::std::os::raw::c_uchar,
@@ -391,7 +411,18 @@ unsafe extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {
-    #[doc = " Decode an Opus packet with floating point output.\n @param [in] st <tt>OpusDecoder*</tt>: Decoder state\n @param [in] data <tt>char*</tt>: Input payload. Use a NULL pointer to indicate packet loss\n @param [in] len <tt>opus_int32</tt>: Number of bytes in payload\n @param [out] pcm <tt>float*</tt>: Output signal (interleaved if 2 channels). length\n  is frame_size*channels*sizeof(float)\n @param [in] frame_size Number of samples per channel of available space in \\a pcm.\n  If this is less than the maximum packet duration (120ms; 5760 for 48kHz), this function will\n  not be capable of decoding some packets. In the case of PLC (data==NULL) or FEC (decode_fec=1),\n  then frame_size needs to be exactly the duration of audio that is missing, otherwise the\n  decoder will not be in the optimal state to decode the next incoming packet. For the PLC and\n  FEC cases, frame_size <b>must</b> be a multiple of 2.5 ms.\n @param [in] decode_fec <tt>int</tt>: Flag (0 or 1) to request that any in-band forward error correction data be\n  decoded. If no such data is available the frame is decoded as if it were lost.\n @returns Number of decoded samples or @ref opus_errorcodes"]
+    #[doc = " Decode an Opus packet.\n @param [in] st <tt>OpusDecoder*</tt>: Decoder state\n @param [in] data <tt>char*</tt>: Input payload. Use a NULL pointer to indicate packet loss\n @param [in] len <tt>opus_int32</tt>: Number of bytes in payload*\n @param [out] pcm <tt>opus_int32*</tt>: Output signal (interleaved if 2 channels) representing (or slightly exceeding) 24-bit values. length\n  is frame_size*channels*sizeof(opus_int32)\n @param [in] frame_size Number of samples per channel of available space in \\a pcm.\n  If this is less than the maximum packet duration (120ms; 5760 for 48kHz), this function will\n  not be capable of decoding some packets. In the case of PLC (data==NULL) or FEC (decode_fec=1),\n  then frame_size needs to be exactly the duration of audio that is missing, otherwise the\n  decoder will not be in the optimal state to decode the next incoming packet. For the PLC and\n  FEC cases, frame_size <b>must</b> be a multiple of 2.5 ms.\n @param [in] decode_fec <tt>int</tt>: Flag (0 or 1) to request that any in-band forward error correction data be\n  decoded. If no such data is available, the frame is decoded as if it were lost.\n @returns Number of decoded samples or @ref opus_errorcodes"]
+    pub fn opus_decode24(
+        st: *mut OpusDecoder,
+        data: *const ::std::os::raw::c_uchar,
+        len: opus_int32,
+        pcm: *mut opus_int32,
+        frame_size: ::std::os::raw::c_int,
+        decode_fec: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    #[doc = " Decode an Opus packet with floating point output.\n @param [in] st <tt>OpusDecoder*</tt>: Decoder state\n @param [in] data <tt>char*</tt>: Input payload. Use a NULL pointer to indicate packet loss\n @param [in] len <tt>opus_int32</tt>: Number of bytes in payload\n @param [out] pcm <tt>float*</tt>: Output signal (interleaved if 2 channels). length\n  is frame_size*channels*sizeof(float)\n @param [in] frame_size Number of samples per channel of available space in \\a pcm.\n  If this is less than the maximum packet duration (120ms; 5760 for 48kHz), this function will\n  not be capable of decoding some packets. In the case of PLC (data==NULL) or FEC (decode_fec=1),\n  then frame_size needs to be exactly the duration of audio that is missing, otherwise the\n  decoder will not be in the optimal state to decode the next incoming packet. For the PLC and\n  FEC cases, frame_size <b>must</b> be a multiple of 2.5 ms.\n @param [in] decode_fec <tt>int</tt>: Flag (0 or 1) to request that any in-band forward error correction data be\n  decoded. If no such data is available the frame is decoded as if it were lost.\n @returns Number of decoded samples per channel or @ref opus_errorcodes"]
     pub fn opus_decode_float(
         st: *mut OpusDecoder,
         data: *const ::std::os::raw::c_uchar,
@@ -471,12 +502,22 @@ unsafe extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {
-    #[doc = " Decode audio from an Opus DRED packet with floating point output.\n @param [in] st <tt>OpusDecoder*</tt>: Decoder state\n @param [in] dred <tt>OpusDRED*</tt>: DRED state\n @param [in] dred_offset <tt>opus_int32</tt>: position of the redundancy to decode (in samples before the beginning of the real audio data in the packet).\n @param [out] pcm <tt>opus_int16*</tt>: Output signal (interleaved if 2 channels). length\n  is frame_size*channels*sizeof(opus_int16)\n @param [in] frame_size Number of samples per channel to decode in \\a pcm.\n  frame_size <b>must</b> be a multiple of 2.5 ms.\n @returns Number of decoded samples or @ref opus_errorcodes"]
+    #[doc = " Decode audio from an Opus DRED packet with 16-bit output.\n @param [in] st <tt>OpusDecoder*</tt>: Decoder state\n @param [in] dred <tt>OpusDRED*</tt>: DRED state\n @param [in] dred_offset <tt>opus_int32</tt>: position of the redundancy to decode (in samples before the beginning of the real audio data in the packet).\n @param [out] pcm <tt>opus_int16*</tt>: Output signal (interleaved if 2 channels). length\n  is frame_size*channels*sizeof(opus_int16)\n @param [in] frame_size Number of samples per channel to decode in \\a pcm.\n  frame_size <b>must</b> be a multiple of 2.5 ms.\n @returns Number of decoded samples or @ref opus_errorcodes"]
     pub fn opus_decoder_dred_decode(
         st: *mut OpusDecoder,
         dred: *const OpusDRED,
         dred_offset: opus_int32,
         pcm: *mut opus_int16,
+        frame_size: opus_int32,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    #[doc = " Decode audio from an Opus DRED packet with 24-bit output.\n @param [in] st <tt>OpusDecoder*</tt>: Decoder state\n @param [in] dred <tt>OpusDRED*</tt>: DRED state\n @param [in] dred_offset <tt>opus_int32</tt>: position of the redundancy to decode (in samples before the beginning of the real audio data in the packet).\n @param [out] pcm <tt>opus_int32*</tt>: Output signal (interleaved if 2 channels). length\n  is frame_size*channels*sizeof(opus_int16)\n @param [in] frame_size Number of samples per channel to decode in \\a pcm.\n  frame_size <b>must</b> be a multiple of 2.5 ms.\n @returns Number of decoded samples or @ref opus_errorcodes"]
+    pub fn opus_decoder_dred_decode24(
+        st: *mut OpusDecoder,
+        dred: *const OpusDRED,
+        dred_offset: opus_int32,
+        pcm: *mut opus_int32,
         frame_size: opus_int32,
     ) -> ::std::os::raw::c_int;
 }
@@ -720,6 +761,16 @@ unsafe extern "C" {
     ) -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {
+    #[doc = " Encodes a multistream Opus frame.\n @param st <tt>OpusMSEncoder*</tt>: Multistream encoder state.\n @param[in] pcm <tt>const opus_int32*</tt>: The input signal as interleaved\n                                            samples representing (or slightly exceeding) 24-bit values.\n                                            This must contain\n                                            <code>frame_size*channels</code>\n                                            samples.\n @param frame_size <tt>int</tt>: Number of samples per channel in the input\n                                 signal.\n                                 This must be an Opus frame size for the\n                                 encoder's sampling rate.\n                                 For example, at 48 kHz the permitted values\n                                 are 120, 240, 480, 960, 1920, and 2880.\n                                 Passing in a duration of less than 10 ms\n                                 (480 samples at 48 kHz) will prevent the\n                                 encoder from using the LPC or hybrid modes.\n @param[out] data <tt>unsigned char*</tt>: Output payload.\n                                           This must contain storage for at\n                                           least \\a max_data_bytes.\n @param [in] max_data_bytes <tt>opus_int32</tt>: Size of the allocated\n                                                 memory for the output\n                                                 payload. This may be\n                                                 used to impose an upper limit on\n                                                 the instant bitrate, but should\n                                                 not be used as the only bitrate\n                                                 control. Use #OPUS_SET_BITRATE to\n                                                 control the bitrate.\n @returns The length of the encoded packet (in bytes) on success or a\n          negative error code (see @ref opus_errorcodes) on failure."]
+    pub fn opus_multistream_encode24(
+        st: *mut OpusMSEncoder,
+        pcm: *const opus_int32,
+        frame_size: ::std::os::raw::c_int,
+        data: *mut ::std::os::raw::c_uchar,
+        max_data_bytes: opus_int32,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
     #[doc = " Encodes a multistream Opus frame from floating point input.\n @param st <tt>OpusMSEncoder*</tt>: Multistream encoder state.\n @param[in] pcm <tt>const float*</tt>: The input signal as interleaved\n                                       samples with a normal range of\n                                       +/-1.0.\n                                       Samples with a range beyond +/-1.0\n                                       are supported but will be clipped by\n                                       decoders using the integer API and\n                                       should only be used if it is known\n                                       that the far end supports extended\n                                       dynamic range.\n                                       This must contain\n                                       <code>frame_size*channels</code>\n                                       samples.\n @param frame_size <tt>int</tt>: Number of samples per channel in the input\n                                 signal.\n                                 This must be an Opus frame size for the\n                                 encoder's sampling rate.\n                                 For example, at 48 kHz the permitted values\n                                 are 120, 240, 480, 960, 1920, and 2880.\n                                 Passing in a duration of less than 10 ms\n                                 (480 samples at 48 kHz) will prevent the\n                                 encoder from using the LPC or hybrid modes.\n @param[out] data <tt>unsigned char*</tt>: Output payload.\n                                           This must contain storage for at\n                                           least \\a max_data_bytes.\n @param [in] max_data_bytes <tt>opus_int32</tt>: Size of the allocated\n                                                 memory for the output\n                                                 payload. This may be\n                                                 used to impose an upper limit on\n                                                 the instant bitrate, but should\n                                                 not be used as the only bitrate\n                                                 control. Use #OPUS_SET_BITRATE to\n                                                 control the bitrate.\n @returns The length of the encoded packet (in bytes) on success or a\n          negative error code (see @ref opus_errorcodes) on failure."]
     pub fn opus_multistream_encode_float(
         st: *mut OpusMSEncoder,
@@ -760,7 +811,7 @@ unsafe extern "C" {
     ) -> *mut OpusMSDecoder;
 }
 unsafe extern "C" {
-    #[doc = " Intialize a previously allocated decoder state object.\n The memory pointed to by \\a st must be at least the size returned by\n opus_multistream_encoder_get_size().\n This is intended for applications which use their own allocator instead of\n malloc.\n To reset a previously initialized state, use the #OPUS_RESET_STATE CTL.\n @see opus_multistream_decoder_create\n @see opus_multistream_deocder_get_size\n @param st <tt>OpusMSEncoder*</tt>: Multistream encoder state to initialize.\n @param Fs <tt>opus_int32</tt>: Sampling rate to decode at (in Hz).\n                                This must be one of 8000, 12000, 16000,\n                                24000, or 48000.\n @param channels <tt>int</tt>: Number of channels to output.\n                               This must be at most 255.\n                               It may be different from the number of coded\n                               channels (<code>streams +\n                               coupled_streams</code>).\n @param streams <tt>int</tt>: The total number of streams coded in the\n                              input.\n                              This must be no more than 255.\n @param coupled_streams <tt>int</tt>: Number of streams to decode as coupled\n                                      (2 channel) streams.\n                                      This must be no larger than the total\n                                      number of streams.\n                                      Additionally, The total number of\n                                      coded channels (<code>streams +\n                                      coupled_streams</code>) must be no\n                                      more than 255.\n @param[in] mapping <code>const unsigned char[channels]</code>: Mapping from\n                    coded channels to output channels, as described in\n                    @ref opus_multistream.\n @returns #OPUS_OK on success, or an error code (see @ref opus_errorcodes)\n          on failure."]
+    #[doc = " Initialize a previously allocated decoder state object.\n The memory pointed to by \\a st must be at least the size returned by\n opus_multistream_encoder_get_size().\n This is intended for applications which use their own allocator instead of\n malloc.\n To reset a previously initialized state, use the #OPUS_RESET_STATE CTL.\n @see opus_multistream_decoder_create\n @see opus_multistream_deocder_get_size\n @param st <tt>OpusMSEncoder*</tt>: Multistream encoder state to initialize.\n @param Fs <tt>opus_int32</tt>: Sampling rate to decode at (in Hz).\n                                This must be one of 8000, 12000, 16000,\n                                24000, or 48000.\n @param channels <tt>int</tt>: Number of channels to output.\n                               This must be at most 255.\n                               It may be different from the number of coded\n                               channels (<code>streams +\n                               coupled_streams</code>).\n @param streams <tt>int</tt>: The total number of streams coded in the\n                              input.\n                              This must be no more than 255.\n @param coupled_streams <tt>int</tt>: Number of streams to decode as coupled\n                                      (2 channel) streams.\n                                      This must be no larger than the total\n                                      number of streams.\n                                      Additionally, The total number of\n                                      coded channels (<code>streams +\n                                      coupled_streams</code>) must be no\n                                      more than 255.\n @param[in] mapping <code>const unsigned char[channels]</code>: Mapping from\n                    coded channels to output channels, as described in\n                    @ref opus_multistream.\n @returns #OPUS_OK on success, or an error code (see @ref opus_errorcodes)\n          on failure."]
     pub fn opus_multistream_decoder_init(
         st: *mut OpusMSDecoder,
         Fs: opus_int32,
@@ -777,6 +828,17 @@ unsafe extern "C" {
         data: *const ::std::os::raw::c_uchar,
         len: opus_int32,
         pcm: *mut opus_int16,
+        frame_size: ::std::os::raw::c_int,
+        decode_fec: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+unsafe extern "C" {
+    #[doc = " Decode a multistream Opus packet.\n @param st <tt>OpusMSDecoder*</tt>: Multistream decoder state.\n @param[in] data <tt>const unsigned char*</tt>: Input payload.\n                                                Use a <code>NULL</code>\n                                                pointer to indicate packet\n                                                loss.\n @param len <tt>opus_int32</tt>: Number of bytes in payload.\n @param[out] pcm <tt>opus_int32*</tt>: Output signal, with interleaved\n                                       samples representing (or slightly exceeding) 24-bit values.\n                                       This must contain room for\n                                       <code>frame_size*channels</code>\n                                       samples.\n @param frame_size <tt>int</tt>: The number of samples per channel of\n                                 available space in \\a pcm.\n                                 If this is less than the maximum packet duration\n                                 (120 ms; 5760 for 48kHz), this function will not be capable\n                                 of decoding some packets. In the case of PLC (data==NULL)\n                                 or FEC (decode_fec=1), then frame_size needs to be exactly\n                                 the duration of audio that is missing, otherwise the\n                                 decoder will not be in the optimal state to decode the\n                                 next incoming packet. For the PLC and FEC cases, frame_size\n                                 <b>must</b> be a multiple of 2.5 ms.\n @param decode_fec <tt>int</tt>: Flag (0 or 1) to request that any in-band\n                                 forward error correction data be decoded.\n                                 If no such data is available, the frame is\n                                 decoded as if it were lost.\n @returns Number of samples decoded on success or a negative error code\n          (see @ref opus_errorcodes) on failure."]
+    pub fn opus_multistream_decode24(
+        st: *mut OpusMSDecoder,
+        data: *const ::std::os::raw::c_uchar,
+        len: opus_int32,
+        pcm: *mut opus_int32,
         frame_size: ::std::os::raw::c_int,
         decode_fec: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
