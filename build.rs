@@ -86,10 +86,6 @@ fn build_opus(is_static: bool) {
         println!("cargo:info=Disabling Encoder.");
         dst.define("OPUS_DISABLE_ENCODER", "ON");
     }
-    if env::var("CARGO_FEATURE_DISABLE_DECODER").is_ok() {
-        println!("cargo:info=Disabling Decoder.");
-        dst.define("OPUS_DISABLE_DECODER", "ON");
-    }
 
     println!("cargo:info=Building Opus via CMake.");
     let opus_build_dir = dst.build();

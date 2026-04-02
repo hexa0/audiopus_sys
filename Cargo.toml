@@ -37,5 +37,5 @@ generate_binding = ["bindgen"]
 qext = ["static"]
 dred = ["static"]
 osce = ["static"]
-disable_encoder = ["static"]
-disable_decoder = ["static"]
+# currently not possible due to the bindings needing to exist
+# disable_encoder = ["static"]
