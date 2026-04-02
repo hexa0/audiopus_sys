@@ -7,11 +7,7 @@ use std::{env, fmt::Display, path::Path};
 /// Outputs the library-file's prefix as word usable for actual arguments on
 /// commands or paths.
 const fn rustc_linking_word(is_static_link: bool) -> &'static str {
-    if is_static_link {
-        "static"
-    } else {
-        "dylib"
-    }
+    if is_static_link { "static" } else { "dylib" }
 }
 
 /// Generates a new binding at `src/lib.rs` using `src/wrapper.h`.
@@ -85,6 +81,14 @@ fn build_opus(is_static: bool) {
     if env::var("CARGO_FEATURE_OSCE").is_ok() {
         println!("cargo:info=Enabling OSCE.");
         dst.define("OPUS_OSCE", "ON");
+    }
+    if env::var("CARGO_FEATURE_DISABLE_ENCODER").is_ok() {
+        println!("cargo:info=Disabling Encoder.");
+        dst.define("OPUS_DISABLE_ENCODER", "ON");
+    }
+    if env::var("CARGO_FEATURE_DISABLE_DECODER").is_ok() {
+        println!("cargo:info=Disabling Decoder.");
+        dst.define("OPUS_DISABLE_DECODER", "ON");
     }
 
     println!("cargo:info=Building Opus via CMake.");
