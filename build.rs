@@ -70,15 +70,15 @@ fn build_opus(is_static: bool) {
         dst.define("CMAKE_SYSTEM_PROCESSOR", map_architecture(&abi));
     }
 
-    if std::env::var("OPUS_ENABLE_QEXT").is_ok() {
+    if cfg!(feature = "qext") || std::env::var("OPUS_ENABLE_QEXT").is_ok() {
         println!("cargo:info=Enabling QEXT.");
         dst.define("ENABLE_QEXT", "1");
     }
-    if std::env::var("OPUS_ENABLE_DRED").is_ok() {
+    if cfg!(feature = "dred") || std::env::var("OPUS_ENABLE_DRED").is_ok() {
         println!("cargo:info=Enabling DRED.");
         dst.define("OPUS_DRED", "ON");
     }
-    if std::env::var("OPUS_ENABLE_OSCE").is_ok() {
+    if cfg!(feature = "osce") || std::env::var("OPUS_ENABLE_OSCE").is_ok() {
         println!("cargo:info=Enabling OSCE.");
         dst.define("OPUS_OSCE", "ON");
     }
