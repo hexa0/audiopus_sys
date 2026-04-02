@@ -7,7 +7,11 @@ use std::{env, fmt::Display, path::Path};
 /// Outputs the library-file's prefix as word usable for actual arguments on
 /// commands or paths.
 const fn rustc_linking_word(is_static_link: bool) -> &'static str {
-    if is_static_link { "static" } else { "dylib" }
+    if is_static_link {
+        "static"
+    } else {
+        "dylib"
+    }
 }
 
 /// Generates a new binding at `src/lib.rs` using `src/wrapper.h`.
@@ -175,9 +179,9 @@ fn main() {
 
     #[cfg(any(unix, target_env = "gnu"))]
     {
-        let is_qext = cfg!(feature = "qext") || std::env::var("OPUS_ENABLE_QEXT").is_ok();
-        let is_dred = cfg!(feature = "dred") || std::env::var("OPUS_ENABLE_DRED").is_ok();
-        let is_osce = cfg!(feature = "osce") || std::env::var("OPUS_ENABLE_OSCE").is_ok();
+        let is_qext = cfg!(feature = "qext");
+        let is_dred = cfg!(feature = "dred");
+        let is_osce = cfg!(feature = "osce");
 
         if is_qext || is_dred || is_osce {
             println!("cargo:info=Force building Opus due to experimental features.");
