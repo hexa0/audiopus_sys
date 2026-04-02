@@ -76,7 +76,7 @@ fn build_opus(is_static: bool) {
 
     if env::var("CARGO_FEATURE_QEXT").is_ok() {
         println!("cargo:info=Enabling QEXT.");
-        dst.define("ENABLE_QEXT", "1");
+        dst.define("OPUS_QEXT", "ON");
     }
     if env::var("CARGO_FEATURE_DRED").is_ok() {
         println!("cargo:info=Enabling DRED.");
@@ -111,14 +111,6 @@ fn map_architecture(arch: &str) -> &str {
     }
 }
 
-#[cfg(any(unix, target_env = "gnu"))]
-fn find_via_pkg_config(is_static: bool) -> bool {
-    pkg_config::Config::new()
-        .statik(is_static)
-        .probe("opus")
-        .is_ok()
-}
-
 /// Based on the OS or target environment we are building for,
 /// this function will return an expected default library linking method.
 ///
@@ -137,16 +129,6 @@ fn default_library_linking() -> bool {
     #[cfg(any(target_os = "freebsd", all(unix, target_env = "gnu")))]
     {
         false
-    }
-}
-
-fn find_installed_opus() -> Option<String> {
-    if let Ok(lib_directory) = env::var("LIBOPUS_LIB_DIR") {
-        Some(lib_directory)
-    } else if let Ok(lib_directory) = env::var("OPUS_LIB_DIR") {
-        Some(lib_directory)
-    } else {
-        None
     }
 }
 
