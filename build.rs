@@ -7,11 +7,7 @@ use std::{env, fmt::Display, path::Path};
 /// Outputs the library-file's prefix as word usable for actual arguments on
 /// commands or paths.
 const fn rustc_linking_word(is_static_link: bool) -> &'static str {
-    if is_static_link {
-        "static"
-    } else {
-        "dylib"
-    }
+    if is_static_link { "static" } else { "dylib" }
 }
 
 /// Generates a new binding at `src/lib.rs` using `src/wrapper.h`.
@@ -74,15 +70,15 @@ fn build_opus(is_static: bool) {
         dst.define("CMAKE_SYSTEM_PROCESSOR", map_architecture(&abi));
     }
 
-    if cfg!(feature = "qext") || std::env::var("OPUS_ENABLE_QEXT").is_ok() {
+    if env::var("CARGO_FEATURE_QEXT").is_ok() {
         println!("cargo:info=Enabling QEXT.");
         dst.define("ENABLE_QEXT", "1");
     }
-    if cfg!(feature = "dred") || std::env::var("OPUS_ENABLE_DRED").is_ok() {
+    if env::var("CARGO_FEATURE_DRED").is_ok() {
         println!("cargo:info=Enabling DRED.");
         dst.define("OPUS_DRED", "ON");
     }
-    if cfg!(feature = "osce") || std::env::var("OPUS_ENABLE_OSCE").is_ok() {
+    if env::var("CARGO_FEATURE_OSCE").is_ok() {
         println!("cargo:info=Enabling OSCE.");
         dst.define("OPUS_OSCE", "ON");
     }
@@ -151,16 +147,19 @@ fn find_installed_opus() -> Option<String> {
 }
 
 fn is_static_build() -> bool {
-    if cfg!(feature = "static") && cfg!(feature = "dynamic") {
+    let feature_static = env::var("CARGO_FEATURE_STATIC").is_ok();
+    let feature_dynamic = env::var("CARGO_FEATURE_DYNAMIC").is_ok();
+
+    if feature_static && feature_dynamic {
         default_library_linking()
-    } else if cfg!(feature = "static")
+    } else if feature_static
         || env::var("LIBOPUS_STATIC").is_ok()
         || env::var("OPUS_STATIC").is_ok()
     {
         println!("cargo:info=Static feature or environment variable found.");
 
         true
-    } else if cfg!(feature = "dynamic") {
+    } else if feature_dynamic {
         println!("cargo:info=Dynamic feature enabled.");
 
         false
@@ -179,9 +178,9 @@ fn main() {
 
     #[cfg(any(unix, target_env = "gnu"))]
     {
-        let is_qext = cfg!(feature = "qext");
-        let is_dred = cfg!(feature = "dred");
-        let is_osce = cfg!(feature = "osce");
+        let is_qext = env::var("CARGO_FEATURE_QEXT").is_ok();
+        let is_dred = env::var("CARGO_FEATURE_DRED").is_ok();
+        let is_osce = env::var("CARGO_FEATURE_OSCE").is_ok();
 
         if is_qext || is_dred || is_osce {
             println!("cargo:info=Force building Opus due to experimental features.");
